@@ -1,11 +1,11 @@
-const electron = require('electron')
+const electron = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+
+var si = require('systeminformation');
+var ip = require('ip');
 
 // Module to control application life.
-const app = electron.app
 app.commandLine.appendSwitch('--ignore-gpu-blacklist');   // Allows Web GL on Ubuntu
-
-// Module to create native browser window.
-const BrowserWindow = electron.BrowserWindow
 
 const path = require('path')
 const url = require('url')
@@ -14,15 +14,17 @@ const url = require('url')
 // be closed automatically when the JavaScript object is garbage collected.
 let odasStudio = {}
 
-function createWindow () {
+function createWindow() {
 
   // Create the browser window.
   odasStudio.mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-              webgl: true,
-              nodeIntegration : true
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+      webgl: true
     },
     icon: path.join(__dirname, 'resources/images/introlab_icon.png'),
     show: false
@@ -49,7 +51,7 @@ function createWindow () {
     app.quit()
   })
 
-  odasStudio.mainWindow.on('ready-to-show', function() {
+  odasStudio.mainWindow.on('ready-to-show', function () {
     odasStudio.mainWindow.show()
   })
 }
@@ -57,7 +59,59 @@ function createWindow () {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+app.whenReady().then(createWindow);
+
+async function updateSi() {
+  const sysInfo = { cpu: 0, mem: 0, temp: 0 };
+
+  try {
+    const currentLoadData = await si.currentLoad();
+    sysInfo.cpu = currentLoadData.currentLoad;
+
+    const memData = await si.mem();
+    sysInfo.mem = (memData.active / memData.total) * 100;
+
+    const cpuTempData = await si.cpuTemperature();
+    sysInfo.temp = cpuTempData.main;
+
+    return {
+      cpu: sysInfo.cpu.toPrecision(3).toString() + ' %',
+      mem: sysInfo.mem.toPrecision(2).toString() + ' %',
+      temp: sysInfo.temp.toPrecision(3).toString() + ' °C',
+      ip: ip.address()
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+ipcMain.handle('get-system-info', async () => {
+  return await updateSi();
+});
+
+ipcMain.handle('show-dialog', async (event, options) => {
+  const result = await dialog.showOpenDialog(options);
+  return result;
+});
+
+ipcMain.handle('open-legal-window', () => {
+  let legalWindow = new BrowserWindow({ width: 800, height: 600, show: false });
+
+  legalWindow.loadURL(url.format({
+    pathname: path.join(__dirname, 'legal.html'),
+    protocol: 'file:',
+    slashes: true
+  }));
+
+  legalWindow.once('ready-to-show', () => {
+    legalWindow.show();
+  });
+
+  legalWindow.on('closed', () => {
+    legalWindow = null;
+  });
+});
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {

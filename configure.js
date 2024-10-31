@@ -12,9 +12,9 @@ const ipcMain = electron.ipcMain;
 
 let configureWindow = null;
 
-function openConfigureWindow () {
+function openConfigureWindow() {
 
-    if(configureWindow !== null) {
+    if (configureWindow !== null) {
         configureWindow.show();
         return;
     }
@@ -23,13 +23,15 @@ function openConfigureWindow () {
         width: 800,
         height: 600,
         webPreferences: {
-            nodeIntegration : true
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true,
         },
         show: false
     });
 
     configureWindow.loadURL(url.format({
-        pathname: path.join(__dirname, 'views','configure.html'),
+        pathname: path.join(__dirname, 'views', 'configure.html'),
         protocol: 'file:',
         slashes: true
     }));
@@ -49,7 +51,7 @@ ipcMain.on('open-configure-window', openConfigureWindow);
  * Access the app settings
  */
 
-const getSettings = function() {
+const getSettings = function () {
 
     let settings = {
         language: appSettings.language,
@@ -61,9 +63,9 @@ const getSettings = function() {
     return settings;
 }
 
-const setSettings = function(settings) {
+const setSettings = function (settings) {
 
-    if(settings.useSpeech) {
+    if (settings.useSpeech) {
         appSettings.language = settings.language;
         appSettings.sampleRate = settings.sampleRate;
         appSettings.apiKeyfile = settings.apiKeyfile;

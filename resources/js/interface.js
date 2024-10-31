@@ -4,20 +4,20 @@
  */
 
 // Sources
-var rgbValueStrings = ["rgb(75,192,192)","rgb(192,75,192)","rgb(192,192,30)","rgb(0,200,40)"];
+var rgbValueStrings = ["rgb(75,192,192)", "rgb(192,75,192)", "rgb(192,192,30)", "rgb(0,200,40)"];
 
 // Energy gradiant
 var heatmapColors = ['rgb(16, 0, 229)',
-                     'rgb(64, 3, 229)',
-                     'rgb(111, 7, 230)',
-                     'rgb(156, 11, 230)',
-                     'rgb(200, 15, 231)',
-                     'rgb(232, 19, 220)',
-                     'rgb(232, 23, 180)',
-                     'rgb(233, 27, 141)',
-                     'rgb(233, 31, 103)',
-                     'rgb(234, 35, 67)',
-                     'rgb(235, 46, 40)'];
+    'rgb(64, 3, 229)',
+    'rgb(111, 7, 230)',
+    'rgb(156, 11, 230)',
+    'rgb(200, 15, 231)',
+    'rgb(232, 19, 220)',
+    'rgb(232, 23, 180)',
+    'rgb(233, 27, 141)',
+    'rgb(233, 31, 103)',
+    'rgb(234, 35, 67)',
+    'rgb(235, 46, 40)'];
 
 // Is energy value in selected range
 function energyIsInRange(e) {
@@ -35,11 +35,11 @@ function scaleEnergy(e) {
     e -= min;
     max -= min;
 
-    if( e > max)
+    if (e > max)
         e = max;
 
     // Round energy between 0 and 10
-    return Math.round((e/max)*10);
+    return Math.round((e / max) * 10);
 }
 
 /*
@@ -82,7 +82,7 @@ class DataFrame {
         this.ptimestamp = null;
 
         this.sources = [];
-        rgbValueStrings.forEach(function (color,i) {
+        rgbValueStrings.forEach(function (color, i) {
             this.sources.push(new Source(i));
         }.bind(this));
 
@@ -100,10 +100,10 @@ var currentFrame = new DataFrame();
 var sourceManager = new Vue({
     el: '#source_table',
     data: {
-        sources : currentFrame.sources,
+        sources: currentFrame.sources,
     },
-    methods : {
-        showHide: function(e) {
+    methods: {
+        showHide: function (e) {
             document.dispatchEvent(new Event('update-selection'));
         }
     }
@@ -113,15 +113,15 @@ var sourceManager = new Vue({
 var filterManager = new Vue({
     el: '#filter_table',
     data: {
-        showSources : true,
-        showPotentials : true
+        showSources: true,
+        showPotentials: true
     },
-    methods : {
-        showSrc: function(e) {
+    methods: {
+        showSrc: function (e) {
             document.dispatchEvent(new Event('update-selection'));
             console.log('Switched sources ' + filterManager.showSources);
         },
-        showPot: function(e) {
+        showPot: function (e) {
             document.dispatchEvent(new Event('potential-visibility'));
         }
     }
@@ -135,36 +135,18 @@ var filterManager = new Vue({
 var systemMonitor = new Vue({
     el: '#system-monitor',
     data: {
-        system : {cpu:'0 %',mem:0,temp:0, ip:'0.0.0.0'}
+        system: { cpu: '0 %', mem: 0, temp: 0, ip: '0.0.0.0' }
     }
 });
 
-var si = require('systeminformation');
-var ip = require('ip');
-
-function updateSi() { // Gather params
-
-    var sysInfo = {cpu:0,mem:0,temp:0};
-
-    si.currentLoad(function(data) {
-        sysInfo.cpu = data.currentload;
-
-        si.mem(function(data) {
-            sysInfo.mem = (data.active/data.total)*100;
-
-            si.cpuTemperature(function(data) {
-                sysInfo.temp = data.main;
-
-                systemMonitor.system.cpu = sysInfo.cpu.toPrecision(3).toString() + ' %';
-                systemMonitor.system.mem = sysInfo.mem.toPrecision(2).toString() + ' %';
-                systemMonitor.system.temp = sysInfo.temp.toPrecision(3).toString() + ' °C';
-                systemMonitor.system.ip = ip.address();
-
-            });
-        });
-    });
-
+async function updateSi() {
+    try {
+        const systemInfo = await ipcRenderer.invoke('get-system-info');
+        systemMonitor.system = systemInfo;
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 // Schedule update
-setInterval(updateSi,500);
+setInterval(updateSi, 500);
