@@ -7,10 +7,11 @@ const speechToText = require('./../resources/js/speech-to-text.js');
 
 async function openDialog(options = {
   title: 'Open File',
-  properties: ['openFile']
-}) {
+  properties: ['openFile'],
+}, callback) {
   const result = await ipcRenderer.invoke('show-dialog', options);
   console.log(result);
+  if (callback) callback(result.filePaths);
 }
 
 // Fuzzy recording class

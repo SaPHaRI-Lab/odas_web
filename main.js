@@ -74,10 +74,14 @@ async function updateSi() {
     const cpuTempData = await si.cpuTemperature();
     sysInfo.temp = cpuTempData.main;
 
+    const cpuVal = sysInfo.cpu ? sysInfo.cpu.toPrecision(3).toString() + ' %' : "N/A";
+    const memVal = sysInfo.mem ? sysInfo.mem.toPrecision(2).toString() + ' %' : "N/A";
+    const tempVal = sysInfo.temp ? sysInfo.temp.toPrecision(3).toString() + ' °C' : "N/A";
+
     return {
-      cpu: sysInfo.cpu.toPrecision(3).toString() + ' %',
-      mem: sysInfo.mem.toPrecision(2).toString() + ' %',
-      temp: sysInfo.temp.toPrecision(3).toString() + ' °C',
+      cpu: cpuVal,
+      mem: memVal,
+      temp: tempVal,
       ip: ip.address()
     };
   } catch (error) {

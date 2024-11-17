@@ -19,10 +19,18 @@
     "ip": "^2.0.1",
     "mathjs": "^13.2.0",
     "node-localstorage": "^3.0.5",
-    "osx-temperature-sensor": "^1.0.8",
     "systeminformation": "^5.23.5",
     "wav": "^1.0.2",
     "wav-file-info": "0.0.10"
+  },
+  "overrides": {
+    "os": {
+      "darwin": {
+        "dependencies": {
+          "osx-temperature-sensor": "^1.0.8"
+        }
+      }
+    }
   },
   "repository": {
     "type": "git",
